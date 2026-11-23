@@ -2,7 +2,11 @@
 
 A local-first app that scans folders you choose, finds duplicates, large files, old downloads and temp files, and lets you reclaim space safely (quarantine or Recycle Bin, never automatic deletion). Your files never leave your computer.
 
+<<<<<<< HEAD
 **Status: Phase 3 started** (project setup, MySQL schema, React dashboard, and read-only folder scanner).
+=======
+**Status: Phase 2 of 12 complete** (project setup + MySQL schema, and the React dashboard).
+>>>>>>> 36ca64d069dfc214f84e31431659eb48971d588b
 
 ## Requirements
 - Python 3.11+
@@ -34,12 +38,15 @@ npm run dev                      # http://localhost:5173
 ```
 The dev server proxies `/api` to the backend on port 8000. If the backend is not running, the dashboard shows **sample data under a visible "Demo data" banner** so you can preview the UI. With the backend running it shows your real disk usage; scan-based numbers stay at zero until the scanner (Phase 3) has produced a scan.
 
+<<<<<<< HEAD
 ### Scanner (Phase 3)
 - Open Smart Scanner from the sidebar and enter a local folder path, e.g. `C:\\Users\\YourName\\Downloads`.
 - The API recursively reads file metadata, stores results in MySQL, and shows the 100 largest files.
 - Large-file threshold is currently 500 MB; old Downloads threshold is 90 days.
 - This first scanner runs synchronously, so start with a small folder. It skips common system/dependency folders and does not delete or modify files.
 
+=======
+>>>>>>> 36ca64d069dfc214f84e31431659eb48971d588b
 ### Dashboard features
 - Light theme by default, dark mode toggle (remembered), responsive with a collapsible sidebar and mobile drawer
 - Animated disk gauge, count-up KPI tiles that link to their modules
