@@ -3,10 +3,10 @@
 CREATE DATABASE IF NOT EXISTS smart_clutter_cleaner;
 
 CREATE USER IF NOT EXISTS 'clutter_user'@'localhost'
-IDENTIFIED BY 'Abhis05';
+IDENTIFIED BY 'Abhishe2005';
 
 ALTER USER 'clutter_user'@'localhost'
-IDENTIFIED BY 'Abhis05';
+IDENTIFIED BY 'Abhishek2005';
 
 GRANT ALL PRIVILEGES ON smart_clutter_cleaner.*
 TO 'clutter_user'@'localhost';
