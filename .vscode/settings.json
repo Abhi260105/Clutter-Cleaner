@@ -1,4 +1,7 @@
 {
+<<<<<<< HEAD
     "git.ignoreLimitWarning": true,
+=======
+>>>>>>> d397414772d832db7fa99f7664595ccfc3b56dfe
     "python-envs.defaultEnvManager": "ms-python.python:system"
 }
