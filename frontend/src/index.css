@@ -25,7 +25,7 @@
     @apply rounded-2xl border border-slate-200/70 bg-white shadow-card transition-all duration-300 dark:border-white/10 dark:bg-navy-900;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
     @apply btn bg-gradient-to-r from-violet-600 to-cyan-500 text-white shadow-md hover:shadow-lift hover:brightness-110;
@@ -33,7 +33,27 @@
   .btn-ghost {
     @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10;
   }
+  /* Destructive actions such as permanent delete. */
+  .btn-danger {
+    @apply btn bg-rose-600 text-white shadow-md hover:bg-rose-700;
+  }
   .chip {
     @apply rounded-full px-3 py-1 text-xs font-semibold transition-colors;
+  }
+
+  /* Inline status messages for API errors and notices. */
+  .alert {
+    @apply rounded-xl border px-4 py-3 text-sm;
+  }
+  .alert-error {
+    @apply alert border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200;
+  }
+  .alert-info {
+    @apply alert border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200;
+  }
+
+  /* Loading spinner for scans and API calls. */
+  .spinner {
+    @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent;
   }
 }

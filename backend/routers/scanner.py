@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Scan, ScannedFile, StorageReport
+from models import Scan, ScannedFile, StorageReport, UserSetting
 
 router = APIRouter(prefix="/api/scans", tags=["scanner"])
 MB = 1024 ** 2
@@ -18,7 +18,7 @@ OLD_DAYS = 90
 TEMP_EXTENSIONS = {".tmp", ".temp", ".log", ".cache", ".bak"}
 SKIP_DIRECTORIES = {
     "$recycle.bin", "system volume information", "node_modules", ".git",
-    ".venv", "venv", "__pycache__",
+    ".venv", "venv", "__pycache__", ".smart-clutter-quarantine",
 }
 CATEGORY_MAP = {
     "images": {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".heic"},
@@ -79,7 +79,10 @@ def start_scan(payload: ScanRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(scan)
 
-    cutoff = datetime.now() - timedelta(days=OLD_DAYS)
+    saved_settings = {row.key: row.value for row in db.query(UserSetting).all()}
+    large_threshold_mb = int(saved_settings.get("large_file_threshold_mb", 500))
+    old_days = int(saved_settings.get("old_download_days", OLD_DAYS))
+    cutoff = datetime.now() - timedelta(days=old_days)
     total_size = total_files = large_count = old_count = temp_count = errors = 0
     by_type, by_folder, batch = {}, {}, []
 
@@ -109,7 +112,7 @@ def start_scan(payload: ScanRequest, db: Session = Depends(get_db)):
                     is_download = any(part.lower() == "downloads" for part in path.parts)
                     is_old = is_download and modified < cutoff
                     is_temp = extension in TEMP_EXTENSIONS or filename.startswith("~$")
-                    is_large = size >= LARGE_FILE_BYTES
+                    is_large = size >= max(1, large_threshold_mb) * MB
                     category = category_for(extension)
                     full_path = str(path)
 
