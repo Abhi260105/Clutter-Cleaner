@@ -121,4 +121,20 @@ export const api = {
 
   scanFiles: (scanId, limit = 100, offset = 0) =>
     request(`/api/scans/${encodeURIComponent(scanId)}/files${query({ limit, offset })}`),
+
+  // Feature discovery always reads the latest completed scan in the backend.
+  discoverFiles: (kind) => request(`/api/features/files/${encodeURIComponent(kind)}`),
+  analyzeDuplicates: () =>
+    request('/api/features/duplicates/analyze', { method: 'POST' }),
+  getDuplicates: () => request('/api/features/duplicates'),
+  quarantineFile: (file_id, reason = 'manual') =>
+    request('/api/features/quarantine', {
+      method: 'POST',
+      body: JSON.stringify({ file_id, reason }),
+    }),
+  listQuarantine: () => request('/api/features/quarantine'),
+  restoreQuarantine: (id) =>
+    request(`/api/features/quarantine/${encodeURIComponent(id)}/restore`, { method: 'POST' }),
+  getHistory: () => request('/api/features/history'),
+  getAnalytics: () => request('/api/features/analytics'),
 };
