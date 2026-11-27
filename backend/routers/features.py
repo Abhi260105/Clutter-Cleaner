@@ -39,9 +39,10 @@ def discover_files(kind: str, db: Session = Depends(get_db)):
     q = select(ScannedFile).where(ScannedFile.scan_id == scan.id)
     if kind == "large":
         q = q.where(ScannedFile.is_large.is_(True)).order_by(ScannedFile.size.desc())
-    elif kind == "old":
+    elif kind in {"old", "old_downloads", "downloads"}:
+        # These flags are set by the scanner using the configured age threshold.
         q = q.where(ScannedFile.is_old_download.is_(True)).order_by(ScannedFile.modified_at.asc())
-    elif kind == "temporary":
+    elif kind in {"temporary", "temp", "temporary_files"}:
         q = q.where(ScannedFile.is_temp.is_(True)).order_by(ScannedFile.size.desc())
     elif kind == "cleanup":
         q = q.where((ScannedFile.is_temp.is_(True)) | (ScannedFile.is_old_download.is_(True)) | (ScannedFile.is_large.is_(True))).order_by(ScannedFile.size.desc())
@@ -227,3 +228,48 @@ def ai_categorize(db: Session = Depends(get_db)):
     suggestions = [{"name": f.name, "path": f.path, "category": f.category,
                     "suggested_folder": f.category.title(), "size": f.size} for f in rows]
     return {"mode": "local_rules", "note": "Extension-based suggestions, not an AI model prediction.", "suggestions": suggestions}
+
+
+class RecycleBinAction(BaseModel):
+    file_id: int
+    confirm: bool = False
+
+
+@router.post("/recycle-bin")
+def move_file_to_recycle_bin(payload: RecycleBinAction, db: Session = Depends(get_db)):
+    """Move a scanned file to the OS recycle bin; never permanently unlink it."""
+    if not payload.confirm:
+        raise HTTPException(status_code=400, detail="Explicit confirmation is required")
+    file = db.get(ScannedFile, payload.file_id)
+    if not file:
+        raise HTTPException(status_code=404, detail="Scanned file not found")
+    scan = db.get(Scan, file.scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan record not found")
+    source = Path(file.path)
+    try:
+        resolved = source.resolve(strict=True)
+        roots = [Path(root).resolve(strict=True) for root in (scan.root_paths or [])]
+        if not any(os.path.commonpath([str(root), str(resolved)]) == str(root) for root in roots):
+            raise HTTPException(status_code=400, detail="File is outside the scanned folder")
+        if not resolved.is_file():
+            raise HTTPException(status_code=400, detail="Path is not a regular file")
+        size = resolved.stat().st_size
+        try:
+            from send2trash import send2trash
+            send2trash(str(resolved))
+        except ImportError as exc:
+            raise HTTPException(status_code=503, detail="Install send2trash to use the Recycle Bin action") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Could not move file to Recycle Bin: {exc}") from exc
+        db.add(CleanupRecord(scan_id=scan.id, action="recycle_bin", category="manual",
+                             original_path=str(resolved), size=size, success=True))
+        db.delete(file)
+        db.commit()
+        return {"status": "recycled", "path": str(resolved), "size": size}
+    except HTTPException:
+        db.rollback()
+        raise
+    except (OSError, ValueError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot access file: {exc}") from exc
